@@ -56,6 +56,30 @@ class _CourseApiMediaCollectionSerializer(serializers.Serializer):  # pylint: di
         ref_name = 'courseware_api'
 
 
+class CourseProgramSerializer(serializers.Serializer):
+    progress = serializers.SerializerMethodField()
+    title = serializers.CharField()
+    type = serializers.CharField()
+    url = serializers.SerializerMethodField()
+    uuid = serializers.SerializerMethodField()
+
+    def get_progress(self, program):
+        progress = program.get('progress')
+        return {
+            'completed': progress.get('completed'),
+            'in_progress': progress.get('in_progress'),
+            'not_started': progress.get('not_started')
+        }
+
+    def get_url(self, program):
+        request = self.context.get('request')
+        return request.build_absolute_uri(program.get('url'))
+
+    def get_uuid(self, program):
+        progress = program.get('progress')
+        return progress.get('uuid')
+
+
 class CourseInfoSerializer(serializers.Serializer):  # pylint: disable=abstract-method
     """
     Serializer for Course objects providing minimal data about the course.
@@ -76,6 +100,7 @@ class CourseInfoSerializer(serializers.Serializer):  # pylint: disable=abstract-
     number = serializers.CharField(source='display_number_with_default')
     offer_html = serializers.CharField()
     org = serializers.CharField(source='display_org_with_default')
+    related_programs = CourseProgramSerializer(many=True)
     short_description = serializers.CharField()
     start = serializers.DateTimeField()
     start_display = serializers.CharField()
